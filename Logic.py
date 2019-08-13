@@ -171,7 +171,7 @@ while not isGameOver:
 				continue
 
 			indices = tuple( int((n - BORDER) / SQUARE_SIZE) for n in event.pos )
-			print(indices, event.pos)
+			# print(indices, event.pos)
 
 			Piece.move( indices[::-1] )
 
