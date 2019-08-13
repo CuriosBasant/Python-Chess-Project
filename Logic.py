@@ -21,8 +21,8 @@ pygame.display.set_caption('Real Chess Game')
 # pygame.display.set_icon( pygame.image.load('Icon.jpg') )
 chess_font = pygame.font.SysFont('Chess', PIECE_SIZE)
 
-screen = (BOARD_SIZE - 4) * SQUARE_SIZE + BORDER * 2
-screen = pygame.display.set_mode( (screen, screen) )
+SCREEN_SIZE = (BOARD_SIZE - 4) * SQUARE_SIZE + BORDER * 2
+screen = pygame.display.set_mode( (SCREEN_SIZE, SCREEN_SIZE) )
 
 get_sqr_bgcolor = lambda pos: (LIGHT_SQ, DARK_SQ)[(pos[0] + pos[1]) % 2]
 
@@ -33,16 +33,16 @@ class Coordinate:
 	def update_coords( self, tup ):
 		self.ind_r, self.ind_c = self.index = tup
 
-	centered = lambda ind: ind * SQUARE_SIZE + int((SQUARE_SIZE - PIECE_SIZE) / 2) + BORDER 
+	centered = lambda self, ind: ind * SQUARE_SIZE + int((SQUARE_SIZE - PIECE_SIZE) / 2) + BORDER 
 
 	@property
-	def coords( self ): return ( centered(self.ind_r), centered(self.ind_c) )
+	def coords( self ):
+		return ( self.centered(self.ind_c), self.centered(self.ind_r) )
 
 sqr_from = Coordinate( (None, None) )
 sqr_to = Coordinate( (None, None) )
 
 class Board:
-	
 	position = ['~' * 12] * 2 + ['~~rnbqkbnr~~','~~pppppppp~~'] + ['~~00000000~~'] * 4 + ['~~PPPPPPPP~~','~~RNBQKBNR~~'] + ['~' * 12] * 2
 
 	piece_obj = [[None] * 8 for _ in range(8)]
@@ -86,7 +86,7 @@ class Piece:
 	def move( indices ):
 		sqr_to.update_coords( indices )
 
-		get_piece_from = lambda idx: Board.position[idx.ind_r + 2][idx.ind_c + 1]
+		get_piece_from = lambda idx: Board.position[idx.ind_r + 2][idx.ind_c + 2]
 		global sqr_from, is_selected, game_turn
 
 		print(sqr_to.index)
@@ -108,10 +108,6 @@ class Piece:
 
 			is_selected = False
 			game_turn = not game_turn	# Switching Turn
-
-
-Board.draw()
-Board.set_position()
 
 class Pawn:
 	@staticmethod
@@ -159,6 +155,10 @@ class King:
 	def show_path():
 		pass
 
+
+Board.draw_squares()
+Board.set_position()
+
 while not isGameOver:
 
 	for event in pygame.event.get():
@@ -167,11 +167,11 @@ while not isGameOver:
 			pygame.quit()
 			sys.exit()
 		elif event.type == pygame.MOUSEBUTTONDOWN:
-			if not (BORDER < event.pos[0] < width - BORDER and BORDER < event.pos[1] < height - BORDER):
+			if not (BORDER < event.pos[0] < SCREEN_SIZE - BORDER and BORDER < event.pos[1] < SCREEN_SIZE - BORDER):
 				continue
 
 			indices = tuple( int((n - BORDER) / SQUARE_SIZE) for n in event.pos )
-			# print(indices, event.pos)
+			print(indices, event.pos)
 
 			Piece.move( indices[::-1] )
 
