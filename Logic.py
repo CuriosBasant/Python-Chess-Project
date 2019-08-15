@@ -2,7 +2,7 @@ for i in range(3) : print('\n')
 
 import pygame, sys
 
-isGameOver = False
+is_game_over = False
 game_turn = True
 
 BOARD_SIZE = 12
@@ -159,7 +159,7 @@ class King:
 Board.draw_squares()
 Board.set_position()
 
-while not isGameOver:
+while not is_game_over:
 
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
