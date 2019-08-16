@@ -43,7 +43,7 @@ sqr_from = Coordinate( (None, None) )
 sqr_to = Coordinate( (None, None) )
 
 class Board:
-	position = ['~' * 12] * 2 + ['~~rnbqkbnr~~','~~pppppppp~~'] + ['~~00000000~~'] * 4 + ['~~PPPPPPPP~~','~~RNBQKBNR~~'] + ['~' * 12] * 2
+	position = ['~' * 12] * 2 + ['~~rnbqkbnr~~','~~0pp00ppp~~'] + ['~~00000000~~'] * 4 + ['~~0PPP0P0P~~','~~RNBQKBNR~~'] + ['~' * 12] * 2
 
 	piece_obj = [[None] * 8 for _ in range(8)]
 
@@ -72,15 +72,18 @@ class Board:
 		Board.position[sqr.ind_r + 2] = Board.position[sqr.ind_r + 2][: sqr.ind_c + 2] + ('0' if p == ' ' else p) + Board.position[sqr.ind_r + 2][sqr.ind_c + 3 :]
 
 class Piece:
+	homes = []
 	@staticmethod
 	def get_class( piece_ch ):
 		return { 'P': Pawn, 'N': Knight, 'B': Bishop, 'R': Rook, 'Q': Queen, 'K': King } [piece_ch.upper()]()
 
 	@staticmethod
-	def draw( ind, piece_sym ):
+	def draw( ind, piece_sym, to_update_board_position = True ):
 		label = chess_font.render(piece_sym, True, BLACK, get_sqr_bgcolor( ind.index ))
 		screen.blit( label, ind.coords )
-		Board.update_position( ind, piece_sym )
+
+		if to_update_board_position:
+			Board.update_position( ind, piece_sym )
 		
 	@staticmethod
 	def move( indices ):
@@ -97,7 +100,7 @@ class Piece:
 			sqr_from.update_coords( sqr_to.index )
 			is_selected = True
 
-		elif is_selected:
+		elif is_selected and sqr_to.index in Piece.homes:
 			piece = get_piece_from( sqr_from )
 
 			Piece.draw( sqr_from, ' ' )	# delete piece
@@ -106,54 +109,52 @@ class Piece:
 			Board.piece_obj[sqr_to.ind_r][sqr_to.ind_c] = Board.piece_obj[sqr_from.ind_r][sqr_from.ind_c]
 			Board.piece_obj[sqr_from.ind_r][sqr_from.ind_c] = None
 
+			Piece.homes.remove(sqr_to.index)
+			for home in Piece.homes:
+				Piece.draw( Coordinate(home), ' ', False )
+			
+			Piece.homes.clear()
 			is_selected = False
 			game_turn = not game_turn	# Switching Turn
+		
+	@staticmethod
+	def calculate_path(direction, to_continue = True):
+		current_sqr = ()
+		for d in direction:
+			current_sqr = (sqr_to.ind_r + d[0], sqr_to.ind_c + d[1])
+			while Board.position[current_sqr[0] + 2][current_sqr[1] + 2] == '0':
+				Piece.homes.append(current_sqr)
+				Piece.draw( Coordinate(current_sqr), 'o', False )
+				if to_continue:
+					current_sqr = (current_sqr[0] + d[0], current_sqr[1] + d[1])
+				else:
+					break
 
 class Pawn:
-	@staticmethod
-	def show_path():
+	can_double_move = True
+	# @staticmethod
+	def show_path(self):
 		pass
 
 class Knight:
-	@staticmethod
-	def show_path():
-		pass
+	def show_path(self):
+		Piece.calculate_path( [(-1, -2), (-2, -1), (-2, 1), (1, -2), (1, 2), (2, 1), (2, -1), (-1, 2)], False )
 
 class Bishop:
-	homes = []
-	# @staticmethod
 	def show_path(self):
-		direction = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
-		current_sqr = sqr_to.index #(sqr_to.ind_r + 2, sqr_to.ind_c + 1)
-		
-		print("Bishop at -", current_sqr)
-		i = 1
-		while any(direction):
-			print(direction)
-			for d, tup in enumerate(direction):
-				if not not tup:
-					current_sqr = (sqr_to.ind_r + tup[0] * i, sqr_to.ind_c + tup[1] * i)
-					print(current_sqr)
-					if Board.position[current_sqr[0] + 2][current_sqr[1] + 1] == '0':
-						self.homes.append(current_sqr)
-						Piece.draw(Coordinate(current_sqr), 'o')
-					else:
-						direction[d] = False
-			i += 1
+		Piece.calculate_path( [(-1, -1), (-1, 1), (1, 1), (1, -1)] )
+
 class Rook:
-	@staticmethod
-	def show_path():
-		pass
+	def show_path(self):
+		Piece.calculate_path( [(-1, 0), (0, 1), (1, 0), (0, -1)] )
 
 class Queen:
-	@staticmethod
-	def show_path():
-		pass
+	def show_path(self):
+		Piece.calculate_path( [(-1, 0), (0, 1), (1, 0), (0, -1), (-1, -1), (-1, 1), (1, 1), (1, -1)] )
 
 class King:
-	@staticmethod
-	def show_path():
-		pass
+	def show_path(self):
+		Piece.calculate_path( [(-1, 0), (0, 1), (1, 0), (0, -1), (-1, -1), (-1, 1), (1, 1), (1, -1)], False )
 
 
 Board.draw_squares()
